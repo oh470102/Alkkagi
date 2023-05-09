@@ -3,7 +3,7 @@ from classes_v import Stone
 import pygame, math, time
 
 # GLOBAL CONSTANTS
-FRICTION = 0.97 # 작을수록 마찰 세짐       
+FRICTION = 0.968 # 작을수록 마찰 세짐       
 FPS = 120
 
 # INITS.
@@ -51,7 +51,9 @@ while run:
                 curr.highlight()
 
             if event.key == pygame.K_SPACE:
-                curr.shoot(frame=FPS, all_sprites=all_sprites, strength=1.1, angle=-15, friction=FRICTION, no_board_sprites=no_board_sprites)
+                strength = curr.get_str(); print(strength)
+                angle = curr.get_angle(); print(f"angle: {angle}")
+                curr.shoot(frame=FPS, all_sprites=all_sprites, strength=strength, angle=angle, friction=FRICTION, no_board_sprites=no_board_sprites)
             
                 if in_boundary(curr) is False: 
                     player_stones.remove(curr)
