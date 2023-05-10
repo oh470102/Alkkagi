@@ -1,8 +1,8 @@
 import pygame, math, copy, time
 
 VELOCITY_FACTOR = 600
-THRESHOLD = 30
-DISTANCE_TO_STRENGTH = 1/60
+THRESHOLD = 90
+DISTANCE_TO_STRENGTH = 1/50
 
 # DEFINE CLASSES
 class Board(pygame.sprite.Sprite):
@@ -65,12 +65,17 @@ class Stone(pygame.sprite.Sprite):
                 stone.rect.y += (stone.vel_y * dt)
 
             # APPLY FRICTION
-                #print(f"BEFORE FRICTION: vel_x: {stone.vel_x}, vel_y: {stone.vel_y}")
-                stone.vel_x *= (friction)
-                stone.vel_y *= (friction)
+                print(f"BEFORE FRICTION: vel_x: {stone.vel_x}, vel_y: {stone.vel_y}")
+                if abs(stone.vel_x) > THRESHOLD: 
+                    stone.vel_x *= (friction)
+                else: stone.vel_x = THRESHOLD
+                if abs(stone.vel_y) > THRESHOLD:
+                    stone.vel_y *= (friction)
+                else: stone.vel_y = THRESHOLD
+
                 #print(f"AFTER FRICTION: vel_x: {stone.vel_x}, vel_y: {stone.vel_y}")
-                if abs(stone.vel_x) < THRESHOLD: stone.vel_x = 0
-                if abs(stone.vel_y) < THRESHOLD: stone.vel_y = 0
+                if abs(stone.vel_x) <= THRESHOLD and abs(stone.vel_y) <= THRESHOLD:
+                    stone.vel_x = 0; stone.vel_y = 0
 
                 # UPDATE SCREEN
                 all_sprites.draw(self.screen)
@@ -80,8 +85,8 @@ class Stone(pygame.sprite.Sprite):
             count = 0
             for stone in no_board_sprites:
                 if stone.vel_x == 0 and stone.vel_y == 0: count += 1
-            if count == 3: 
-                print("END")
+            if count == len(list(no_board_sprites)): 
+                print("MOTION END")
                 break
 
     def update_arrow(self):
@@ -169,7 +174,7 @@ def momentum_conservation(obj1, obj2, angle=None):
     f_v2x = v2x - 2*m1/mT * (dp2) * (x2-x1) / k 
     f_v2y = v2y - 2*m1/mT * (dp2) * (y2-y1) / k 
 
-    return f_v1x + 15, f_v1y + 15, f_v2x + 15, f_v2y + 15
+    return f_v1x + 10, f_v1y + 10, f_v2x + 10, f_v2y + 10
 
 def rotation(point, center, angle):
     angle = math.degrees(angle)/20
@@ -199,5 +204,22 @@ def dilation(point1, point2, size):
     ret2 = p2_V_.x, p2_V_.y
 
     return ret1, ret2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
