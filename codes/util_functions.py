@@ -1,6 +1,15 @@
 import pygame, math
 from classes_v import Stone, Board
 
+def rotation(point, center, angle):
+    angle = math.degrees(angle)
+    a, b = center
+    x, y = point
+    x_ = (x-a)*math.cos(angle) - (y-b)*math.sin(angle)
+    y_ = (x-a)*math.sin(angle) - (y-b)*math.cos(angle)
+
+    return x_, y_
+
 def dot(v1, v2):
     temp = [v1[i]*v2[i] for i in range(0, len(v1))]
     return sum(temp)
@@ -22,21 +31,20 @@ def board_init():
     bstone1 = Stone(x=UNIT*3, y=UNIT*3, image="black_stone.png", screen=screen)
     bstone2 = Stone(x=UNIT*9, y=UNIT*3, image="black_stone.png", screen=screen)
     bstone3 = Stone(x=UNIT*15, y=UNIT*3, image="black_stone.png", screen=screen)
+    wstone1 = Stone(x=UNIT*3, y=UNIT*15, image="white_stone.png", screen=screen)
+    wstone2 = Stone(x=UNIT*9, y=UNIT*15, image="white_stone.png", screen=screen)
+    wstone3 = Stone(x=UNIT*15, y=UNIT*15, image="white_stone.png", screen=screen)
+    stones = [bstone1, bstone2, bstone3, wstone1, wstone2, wstone3]
 
     # ADD TO SPRITE GROUP
     all_sprites = pygame.sprite.Group()
     all_sprites.add(board)
-    all_sprites.add(bstone1)
-    all_sprites.add(bstone2)
-    all_sprites.add(bstone3)
+    for s in stones: all_sprites.add(s)
     all_sprites.draw(screen)
-
     no_board_sprites = pygame.sprite.Group()
-    no_board_sprites.add(bstone1)
-    no_board_sprites.add(bstone2)
-    no_board_sprites.add(bstone3)
+    for s in stones: no_board_sprites.add(s)
 
-    return screen, bstone1, bstone2, bstone3, all_sprites, no_board_sprites
+    return screen, bstone1, bstone2, bstone3, wstone1, wstone2, wstone3, all_sprites, no_board_sprites
 
 def in_boundary(obj):
     screen = obj.screen
@@ -48,10 +56,10 @@ def in_boundary(obj):
     y_lower_boundary = 0
     y_upper_boundary = h
 
-    if (obj.rect.right < x_lower_boundary) or (obj.rect.left > x_upper_boundary):
+    if (obj.rect.center[0] < x_lower_boundary) or (obj.rect.center[0] > x_upper_boundary):
         return False
     
-    if (obj.rect.bottom < y_lower_boundary) or (obj.rect.top > y_upper_boundary):
+    if (obj.rect.center[1] < y_lower_boundary) or (obj.rect.center[1] > y_upper_boundary):
         return False
     
     return True
