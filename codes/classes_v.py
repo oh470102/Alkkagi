@@ -1,8 +1,10 @@
 import pygame, math, copy, time
 
 VELOCITY_FACTOR = 600
-THRESHOLD = 90
-DISTANCE_TO_STRENGTH = 1/50
+THRESHOLD = 55
+DISTANCE_TO_STRENGTH = 1/40
+FRICTION = 0.93 # 작을수록 마찰 세짐       
+FPS = 100
 
 # DEFINE CLASSES
 class Board(pygame.sprite.Sprite):
@@ -31,7 +33,7 @@ class Stone(pygame.sprite.Sprite):
         self.vel_y = -1 * self.vel * math.sin(self.angle)
         self.screen = screen
         self.mass = 1
-        self.radius = max([self.rect.width//2, self.rect.height//2])
+        self.radius = max([self.rect.width//2, self.rect.height//2]) 
         self.prev_center = self.rect.center
         self.line_start = (self.rect.center[0], self.rect.center[1] + self.radius)
         self.line_end = (self.rect.center[0], self.rect.center[1] - self.radius)
@@ -60,18 +62,27 @@ class Stone(pygame.sprite.Sprite):
                     print("after collision:")
                     print(stone.vel_x, stone.vel_y, c_with[0].vel_x, c_with[0].vel_y)
 
+                    # 버그 방지 장치 1
+                    if abs(stone.vel_x) <= THRESHOLD and abs(stone.vel_y) <= THRESHOLD and abs(c_with[0].vel_x) <= THRESHOLD and abs(c_with[0].vel_y) <= THRESHOLD:
+                        stone.vel_x, stone.vel_y, c_with[0].vel_x, c_with[0].vel_y = 0,0,0,0
+                        for stone in no_board_sprites:
+                            if stone.vel_x == 0 and stone.vel_y == 0: count += 1
+                            if count == len(list(no_board_sprites)): 
+                                print("MOTION END")
+                                break
+
+                    # 버그 방지 장치 2
+                    c_with[0].rect.centerx += round((c_with[0].vel_x * dt), 2)
+                    c_with[0].rect.centery += round((c_with[0].vel_y * dt), 2)
+
             # UPDATE POSITIONS
-                stone.rect.x += (stone.vel_x * dt)
-                stone.rect.y += (stone.vel_y * dt)
+                stone.rect.centerx += round((stone.vel_x * dt), 2)
+                stone.rect.centery += round((stone.vel_y * dt), 2)
 
             # APPLY FRICTION
                 print(f"BEFORE FRICTION: vel_x: {stone.vel_x}, vel_y: {stone.vel_y}")
-                if abs(stone.vel_x) > THRESHOLD: 
-                    stone.vel_x *= (friction)
-                else: stone.vel_x = THRESHOLD
-                if abs(stone.vel_y) > THRESHOLD:
-                    stone.vel_y *= (friction)
-                else: stone.vel_y = THRESHOLD
+                stone.vel_x *= (friction)
+                stone.vel_y *= (friction)
 
                 #print(f"AFTER FRICTION: vel_x: {stone.vel_x}, vel_y: {stone.vel_y}")
                 if abs(stone.vel_x) <= THRESHOLD and abs(stone.vel_y) <= THRESHOLD:
@@ -100,6 +111,7 @@ class Stone(pygame.sprite.Sprite):
         all_sprites = self.groups()[0]
         all_sprites.draw(self.screen)
         self.highlight_only()
+        pygame.display.flip()
         
         # DRAW NEW ARROW
         self.update_arrow()
@@ -113,7 +125,6 @@ class Stone(pygame.sprite.Sprite):
 
         pygame.draw.line(self.screen, 'green', self.line_start, self.line_end, width=3)
         pygame.draw.circle(self.screen, 'green', self.line_end, radius=5)
-        pygame.display.flip()
     
     def highlight(self, size=None, angle=None):
         # DRAW A CIRCLE AROUND IT
@@ -158,23 +169,230 @@ class Stone(pygame.sprite.Sprite):
         '''
         return -1*angle
 
+class game_state:
+    def __init__(self):
+        screen, bstone1, bstone2, bstone3, wstone1, wstone2, wstone3, all_sprites, no_board_sprites = board_init()
+        player1_stones, player2_stones = [bstone1, bstone2, bstone3], [wstone1, wstone2, wstone3]
+        self.state = 'intro'
+        self.selected_map_index = 0
+        self.all_sprites = all_sprites
+        self.no_board_sprites = no_board_sprites
+        self.player1_stones = player1_stones
+        self.player2_stones = player2_stones
+        self.screen = screen
+        self.player1_index = 0
+        self.player2_index = 0
+        self.turn = 1
+        self.curr = self.player1_stones[self.player1_index]
+        self.play_initiated = False
+
+    def intro(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.state = 'quit'
+            elif event.type == pygame.KEYUP and event.key == pygame.K_RETURN:
+                self.state = 'map_select'
+                time.sleep(0.1)
+        
+        font1 = pygame.font.SysFont('arial',50)
+        text1 = font1.render("Alkkagi",True, "blue")
+        text1_rect = text1.get_rect(center=(self.screen.get_width() // 2, self.screen.get_height()*1/4))
+        self.screen.blit(text1, text1_rect)
+
+        font2 = pygame.font.SysFont('arial',50)
+        text2 = font2.render("Press Enter to Start",True, "blue")
+        text2_rect = text2.get_rect(center=(self.screen.get_width() // 2, self.screen.get_height()*3/4))
+        self.screen.blit(text2, text2_rect)
+        pygame.display.flip()
+
+    def map_select(self):
+        map_images = []
+        map1 = pygame.image.load("board.png")
+        map1 = pygame.transform.scale(map1, (160,160))
+        map_images.append(map1)
+        map2 = pygame.image.load("board.png")
+        map2 = pygame.transform.scale(map2, (160,160))
+        map_images.append(map2)
+        map3 = pygame.image.load("board.png")
+        map3 = pygame.transform.scale(map3, (160,160))
+        map_images.append(map3)
+
+        x = 40
+        y = 100
+        for i in range(len(map_images)):
+            self.screen.blit(map_images[i],(x,y))
+            x += 200
+        
+        pygame.display.flip()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.state = 'quit'
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_LEFT:
+                    self.selected_map_index = (self.selected_map_index - 1) % 3
+                elif event.key == pygame.K_RIGHT:
+                    self.selected_map_index = (self.selected_map_index + 1) % 3
+                elif event.key == pygame.K_RETURN:
+                    self.state = 'play_init' 
+
+        # Highlight the selected map with a rectangle
+        if self.selected_map_index == 0:
+            pygame.draw.rect(self.screen, (255, 0, 0), ((40, 100),(160,160)),10)
+        elif self.selected_map_index == 1:
+            pygame.draw.rect(self.screen, (255, 0, 0), ((240, 100),(160,160)),10)
+        elif self.selected_map_index == 2:
+            pygame.draw.rect(self.screen, (255, 0, 0), ((440, 100),(160,160)),10)
+
+        font = pygame.font.SysFont('arial',50)
+        text = font.render("Map select",True, "blue")
+        text_rect = text.get_rect(center=(self.screen.get_width() // 2, 50))
+        self.screen.blit(text, text_rect)
+        
+        pygame.display.flip()
+
+    def play(self):
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.state = 'quit'
+                pygame.quit()
+
+            if event.type == pygame.KEYDOWN:
+                
+                if event.key in [pygame.K_RIGHT, pygame.K_LEFT, pygame.K_DOWN, pygame.K_UP, pygame.K_a, pygame.K_b]:
+                    if event.key == pygame.K_a: # UPSIZE
+                        self.curr.highlight(size=1)
+                    if event.key == pygame.K_b: # DOWNSIZE
+                        self.curr.highlight(size=-1)
+
+                    if event.key == pygame.K_DOWN:
+                        self.curr.highlight(angle=1)
+                    if event.key == pygame.K_UP:
+                        self.curr.highlight(angle=-1)
+                    if event.key == pygame.K_LEFT:
+                        self.curr.highlight(angle=1)
+                    if event.key == pygame.K_RIGHT:
+                        self.curr.highlight(angle=-1)
+
+            if event.type == pygame.KEYUP:
+
+                if event.key == pygame.K_TAB:
+                    self.curr.dishighlight(all_sprites=self.all_sprites)
+                    if self.turn == 1: 
+                        self.player1_index = (self.player1_index + 1 ) % len(self.player1_stones)
+                        self.curr = self.player1_stones[self.player1_index]
+                    elif self.turn == 2: 
+                        self.player2_index = (self.player2_index + 1) % len(self.player2_stones)
+                        self.curr = self.player2_stones[self.player2_index]
+                    self.curr.highlight()
+
+                if event.key == pygame.K_SPACE:
+                    strength = self.curr.get_str(); print(strength)
+                    angle = self.curr.get_angle(); print(f"angle: {angle}")
+                    self.curr.shoot(frame=FPS, all_sprites=self.all_sprites, strength=strength, angle=angle, friction=FRICTION, no_board_sprites=self.no_board_sprites)
+
+                    for stone in self.no_board_sprites:
+                        if in_boundary(stone) is False: 
+                            print(f"OUT OF GAME: {stone}")
+                            
+                            if stone in self.player1_stones: self.player1_stones.remove(stone)
+                            elif stone in self.player2_stones: self.player2_stones.remove(stone)
+                            self.all_sprites.remove(stone); self.no_board_sprites.remove(stone)
+                            self.all_sprites.draw(self.curr.screen)
+                            pygame.display.flip()
+                            del stone
+                    
+                    # END CONDITION 
+                    if len(self.player1_stones) * len(self.player2_stones) == 0:
+                        if len(self.player1_stones) == 0: 
+                            print("PLAYER 2 WON!")
+                        else: 
+                            print("PLAYER 1 WON!")
+                        #break -> FIX HERE!
+
+                    
+                    self.turn = 2 if self.turn == 1 else 1
+                    if self.turn == 1: self.curr = self.player1_stones[self.player1_index % len(self.player1_stones)]
+                    elif self.turn == 2: self.curr = self.player2_stones[self.player2_index % len(self.player2_stones)]
+                    self.curr.highlight()
+
+        pygame.display.flip()
+
+        # END CONDITION 
+        if len(self.player1_stones) * len(self.player2_stones) == 0:
+            if len(self.player1_stones) == 0: 
+                print("PLAYER 2 WON!")
+            else: 
+                print("PLAYER 1 WON!")
+
+            #break -> FIX HERE
+
+    def play_init(self):
+        self.reset()
+        self.all_sprites.draw(self.screen)
+        self.curr.highlight()
+        pygame.display.flip()
+        self.play_initiated = True
+        self.state = 'play'
+
+    def reset(self):
+        screen, bstone1, bstone2, bstone3, wstone1, wstone2, wstone3, all_sprites, no_board_sprites = board_init()
+        player1_stones, player2_stones = [bstone1, bstone2, bstone3], [wstone1, wstone2, wstone3]
+        self.all_sprites = all_sprites
+        self.no_board_sprites = no_board_sprites
+        self.player1_stones = player1_stones
+        self.player2_stones = player2_stones
+        self.screen = screen
+        self.player1_index = 0
+        self.player2_index = 0
+        self.turn = 1
+        self.curr = self.player1_stones[self.player1_index]
+        self.play_initiated = False
+
+    def state_manage(self):
+        if self.state == 'intro': 
+            self.intro()
+        elif self.state == 'map_select':
+            self.map_select()
+        elif self.state == 'play_init' and self.play_initiated == False:
+            self.play_init()
+        elif self.state == 'play':
+            self.play()
+        elif self.state == 'quit':
+            pygame.quit()
 
 def momentum_conservation(obj1, obj2, angle=None): 
+
+    CONST = 1.00
+
     m1, m2, mT = obj1.mass, obj2.mass, (obj1.mass + obj2.mass)
-    x1, y1 = obj1.rect.x, obj1.rect.y
-    x2, y2 = obj2.rect.x, obj2.rect.y
+   #x1, y1 = obj1.rect.x, obj1.rect.y
+   #x2, y2 = obj2.rect.x, obj2.rect.y
+
+    x1, y1 = obj1.rect.center[0], obj1.rect.center[1]
+    x2, y2 = obj2.rect.center[0], obj2.rect.center[1]
     v1x, v1y = obj1.vel_x, obj1.vel_y
     v2x, v2y = obj2.vel_x, obj2.vel_y
     k = ((x1-x2)**2 + (y1-y2)**2)
     dp1 = (v1x-v2x)*(x1-x2) + (v1y-v2y)*(y1-y2)
     dp2 = (v2x-v1x)*(x2-x1) + (v2y-v1y)*(y2-y1)
 
-    f_v1x = v1x - 2*m2/mT * (dp1) * (x1-x2) / k 
-    f_v1y = v1y - 2*m2/mT * (dp1) * (y1-y2) / k 
-    f_v2x = v2x - 2*m1/mT * (dp2) * (x2-x1) / k 
-    f_v2y = v2y - 2*m1/mT * (dp2) * (y2-y1) / k 
+    f_v1x = (v1x - 2*m2/mT * (dp1) * (x1-x2) / k) * CONST
+    f_v1y = (v1y - 2*m2/mT * (dp1) * (y1-y2) / k) * CONST
+    f_v2x = (v2x - 2*m1/mT * (dp2) * (x2-x1) / k) * CONST
+    f_v2y = (v2y - 2*m1/mT * (dp2) * (y2-y1) / k) * CONST
 
-    return f_v1x + 10, f_v1y + 10, f_v2x + 10, f_v2y + 10
+    f_v1x, f_v1y, f_v2x, f_v2y = filt([f_v1x, f_v1y, f_v2x, f_v2y])
+
+    return f_v1x, f_v1y, f_v2x, f_v2y
+
+def filt(lis):
+    for i in range(0, len(lis)):
+        lis[i] = lis[i] if abs(lis[i]) >= THRESHOLD//2.3 else 0
+
+    return tuple(lis) 
+
 
 def rotation(point, center, angle):
     angle = math.degrees(angle)/20
@@ -205,21 +423,47 @@ def dilation(point1, point2, size):
 
     return ret1, ret2
 
+def in_boundary(obj):
+    screen = obj.screen
+    w, h = screen.get_size()
 
+    x_lower_boundary = 0
+    x_upper_boundary = w
 
+    y_lower_boundary = 0
+    y_upper_boundary = h
 
+    if (obj.rect.center[0] < x_lower_boundary) or (obj.rect.center[0] > x_upper_boundary):
+        return False
+    
+    if (obj.rect.center[1] < y_lower_boundary) or (obj.rect.center[1] > y_upper_boundary):
+        return False
+    
+    return True
 
+def board_init():
+    WINDOW = (640, 640)
+    GRID = (19, 19)
+    UNIT = WINDOW[0]//GRID[0]
+    screen = pygame.display.set_mode(WINDOW)
+    screen.fill('white')
 
+    # CREATE BOARD, STONE OBJECTS
+    board = Board(x=0, y=0, image="board.png", screen=screen)
+    bstone1 = Stone(x=UNIT*3, y=UNIT*3, image="black_stone.png", screen=screen)
+    bstone2 = Stone(x=UNIT*9, y=UNIT*3, image="black_stone.png", screen=screen)
+    bstone3 = Stone(x=UNIT*15, y=UNIT*3, image="black_stone.png", screen=screen)
+    wstone1 = Stone(x=UNIT*3, y=UNIT*15, image="white_stone.png", screen=screen)
+    wstone2 = Stone(x=UNIT*9, y=UNIT*15, image="white_stone.png", screen=screen)
+    wstone3 = Stone(x=UNIT*15, y=UNIT*15, image="white_stone.png", screen=screen)
+    stones = [bstone1, bstone2, bstone3, wstone1, wstone2, wstone3]
 
+    # ADD TO SPRITE GROUP
+    all_sprites = pygame.sprite.Group()
+    all_sprites.add(board)
+    for s in stones: all_sprites.add(s)
+    #all_sprites.draw(screen)
+    no_board_sprites = pygame.sprite.Group()
+    for s in stones: no_board_sprites.add(s)
 
-
-
-
-
-
-
-
-
-
-
-
+    return screen, bstone1, bstone2, bstone3, wstone1, wstone2, wstone3, all_sprites, no_board_sprites
