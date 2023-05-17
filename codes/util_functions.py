@@ -10,16 +10,11 @@ def rotation(point, center, angle):
 
     return x_, y_
 
-def dot(v1, v2):
-    temp = [v1[i]*v2[i] for i in range(0, len(v1))]
-    return sum(temp)
-
 def mag(v1):
     temp = [c**2 for c in v1]
     return sum(temp)**0.5
 
 def board_init():
-    pygame.init()
     WINDOW = (640, 640)
     GRID = (19, 19)
     UNIT = WINDOW[0]//GRID[0]
@@ -40,7 +35,7 @@ def board_init():
     all_sprites = pygame.sprite.Group()
     all_sprites.add(board)
     for s in stones: all_sprites.add(s)
-    all_sprites.draw(screen)
+    #all_sprites.draw(screen)
     no_board_sprites = pygame.sprite.Group()
     for s in stones: no_board_sprites.add(s)
 
