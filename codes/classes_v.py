@@ -1,9 +1,9 @@
 import pygame, math, copy, time
 
 VELOCITY_FACTOR = 600
-THRESHOLD = 55
+THRESHOLD = 24
 DISTANCE_TO_STRENGTH = 1/40
-FRICTION = 0.93 # 작을수록 마찰 세짐       
+FRICTION = 0.95 # 작을수록 마찰 세짐       
 FPS = 100
 
 # DEFINE CLASSES
@@ -20,7 +20,7 @@ class Stone(pygame.sprite.Sprite):
 
     def __init__(self, x, y, image, screen):
         super().__init__()
-        self.image = pygame.image.load(image)
+        self.image = image
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
@@ -393,7 +393,6 @@ def filt(lis):
 
     return tuple(lis) 
 
-
 def rotation(point, center, angle):
     angle = math.degrees(angle)/20
     center_V = pygame.math.Vector2(center)
@@ -441,6 +440,11 @@ def in_boundary(obj):
     
     return True
 
+def resize_img(img, scalar):
+    new_w = img.get_width() * scalar
+    new_h = img.get_height() * scalar
+    return pygame.transform.scale(img, (new_w, new_h))
+
 def board_init():
     WINDOW = (640, 640)
     GRID = (19, 19)
@@ -449,13 +453,18 @@ def board_init():
     screen.fill('white')
 
     # CREATE BOARD, STONE OBJECTS
+    black_img = resize_img(pygame.image.load("black_stone.png"), 1.5)
+    black_img_large = resize_img(black_img, 1.75)
+    white_img = resize_img(pygame.image.load("white_stone.png"), 1.5)
+    white_img_large = resize_img(white_img, 1.75)
+
     board = Board(x=0, y=0, image="board.png", screen=screen)
-    bstone1 = Stone(x=UNIT*3, y=UNIT*3, image="black_stone.png", screen=screen)
-    bstone2 = Stone(x=UNIT*9, y=UNIT*3, image="black_stone.png", screen=screen)
-    bstone3 = Stone(x=UNIT*15, y=UNIT*3, image="black_stone.png", screen=screen)
-    wstone1 = Stone(x=UNIT*3, y=UNIT*15, image="white_stone.png", screen=screen)
-    wstone2 = Stone(x=UNIT*9, y=UNIT*15, image="white_stone.png", screen=screen)
-    wstone3 = Stone(x=UNIT*15, y=UNIT*15, image="white_stone.png", screen=screen)
+    bstone1 = Stone(x=UNIT*3, y=UNIT*3, image=black_img, screen=screen)
+    bstone2 = Stone(x=UNIT*8, y=UNIT*2, image=black_img_large, screen=screen)
+    bstone3 = Stone(x=UNIT*15, y=UNIT*3, image=black_img, screen=screen)
+    wstone1 = Stone(x=UNIT*3, y=UNIT*15, image=white_img, screen=screen)
+    wstone2 = Stone(x=UNIT*8, y=UNIT*14, image=white_img_large, screen=screen)
+    wstone3 = Stone(x=UNIT*15, y=UNIT*15, image=white_img, screen=screen)
     stones = [bstone1, bstone2, bstone3, wstone1, wstone2, wstone3]
 
     # ADD TO SPRITE GROUP
@@ -467,3 +476,18 @@ def board_init():
     for s in stones: no_board_sprites.add(s)
 
     return screen, bstone1, bstone2, bstone3, wstone1, wstone2, wstone3, all_sprites, no_board_sprites
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
