@@ -1,4 +1,4 @@
-import pygame
+importimport pygame
 
 # initialize
 pygame.init()
@@ -34,21 +34,18 @@ def Start_screen():
 # Map append
 def Map_append():
     screen.fill('white')
-    map1 = pygame.image.load(r"C:/Users/USER/Desktop/Python Project/board.png")
+    map1 = pygame.image.load("board.png")
     map1 = pygame.transform.scale(map1, (160,160))
     map_images.append(map1)
-    map2 = pygame.image.load(r"C:\Users\USER\Desktop\Python Project\board.png")
+    map2 = pygame.image.load("board.png")
     map2 = pygame.transform.scale(map2, (160,160))
     map_images.append(map2)
-    map3 = pygame.image.load(r"C:\Users\USER\Desktop\Python Project\board.png")
-    map3 = pygame.transform.scale(map3, (160,160))
-    map_images.append(map3)
-
-    x = 40
+    
+    x = 80
     y = 100
     for i in range(len(map_images)):
         screen.blit(map_images[i],(x,y))
-        x += 200
+        x += 320
 
 # Text 'select'
 def text_Select():
@@ -82,19 +79,17 @@ while running:
             running = False
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
-                selected_map_index = (selected_map_index - 1) % 3
+                selected_map_index = (selected_map_index - 1) % 2
             elif event.key == pygame.K_RIGHT:
-                selected_map_index = (selected_map_index + 1) % 3
+                selected_map_index = (selected_map_index + 1) % 2
             elif event.key == pygame.K_RETURN:
                 map_selected = False
 
     # Highlight the selected map with a rectangle
     if selected_map_index == 0:
-        pygame.draw.rect(screen, (255, 0, 0), ((40, 100),(160,160)),10)
+        pygame.draw.rect(screen, (255, 0, 0), ((80, 100),(160,160)),10)
     elif selected_map_index == 1:
-        pygame.draw.rect(screen, (255, 0, 0), ((240, 100),(160,160)),10)
-    elif selected_map_index == 2:
-        pygame.draw.rect(screen, (255, 0, 0), ((440, 100),(160,160)),10)
+        pygame.draw.rect(screen, (255, 0, 0), ((400, 100),(160,160)),10)
     else:
         pass
 
@@ -105,3 +100,4 @@ while running:
     
 
 pygame.quit()
+
