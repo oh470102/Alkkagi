@@ -330,9 +330,9 @@ class game_state:
                 continue
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT:
-                    self.selected_map_index = (self.selected_map_index - 1) % 3
+                    self.selected_map_index = (self.selected_map_index - 1) % 2
                 elif event.key == pygame.K_RIGHT:
-                    self.selected_map_index = (self.selected_map_index + 1) % 3
+                    self.selected_map_index = (self.selected_map_index + 1) % 2
                 elif event.key == pygame.K_RETURN:
                     if self.selected_map_index == 0:
                         self.state = 'play_init'
